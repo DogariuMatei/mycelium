@@ -324,4 +324,11 @@ CLAUDE.md
 context/
 bootstrap_scripts/
 
+# Mycelium runtime data
+*.log
+logs/
+data/
+music/
+*.torrent
+
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,jetbrains+all,python,jupyternotebooks,vagrant,nativescript
