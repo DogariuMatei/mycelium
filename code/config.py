@@ -20,7 +20,7 @@ class Config:
     REPO_BRANCH: str = os.getenv("MYCELIUM_BRANCH", "main")
 
     # Timing configuration
-    UPDATE_CHECK_INTERVAL: int = int(os.getenv("MYCELIUM_UPDATE_INTERVAL", "30"))
+    UPDATE_CHECK_INTERVAL: int = int(os.getenv("MYCELIUM_UPDATE_INTERVAL", "10"))
     HEARTBEAT_INTERVAL: int = int(os.getenv("MYCELIUM_HEARTBEAT_INTERVAL", "60"))
 
     # Path configuration
@@ -36,7 +36,7 @@ class Config:
     )
     SEEDBOX_PORT_MIN: int = int(os.getenv("MYCELIUM_SEEDBOX_PORT_MIN", "6881"))
     SEEDBOX_PORT_MAX: int = int(os.getenv("MYCELIUM_SEEDBOX_PORT_MAX", "6891"))
-    SEEDBOX_STATUS_INTERVAL: int = int(os.getenv("MYCELIUM_SEEDBOX_STATUS_INTERVAL", "30"))
+    SEEDBOX_STATUS_INTERVAL: int = int(os.getenv("MYCELIUM_SEEDBOX_STATUS_INTERVAL", "10"))
 
     # Logging configuration
     LOG_LEVEL: str = os.getenv("MYCELIUM_LOG_LEVEL", "INFO")
