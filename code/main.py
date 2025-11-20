@@ -5,6 +5,7 @@ Manages the event loop for code synchronization and seedbox operations.
 """
 
 import asyncio
+import os
 import signal
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -57,7 +58,7 @@ class Orchestrator:
                     logger.info("Updates detected on remote repository")
                     self.code_sync.pull_updates()
                     logger.info("Updates pulled successfully, restarting")
-                    sys.exit(Config.EXIT_RESTART)
+                    os._exit(Config.EXIT_RESTART)
             except CodeSyncError as e:
                 logger.error(f"Code sync error: {e}")
 
