@@ -67,7 +67,7 @@ class Orchestrator:
     async def heartbeat(self) -> None:
         """Periodic heartbeat logging."""
         while self.running:
-            logger.info("Orchestrator Running")
+            logger.info("Orchestrator Running - BUT UPDATES APPLIED")
             await asyncio.sleep(Config.HEARTBEAT_INTERVAL)
 
     async def run_seedbox(self) -> None:
