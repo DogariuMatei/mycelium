@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from config import Config
-from modules import CodeSync, CodeSyncError, Seedbox, SeedboxError
+from modules import CodeSync, CodeSyncError, Seedbox, SeedboxError, LiberationAnnouncer
 from utils import setup_logger
 
 logger = setup_logger(
@@ -37,7 +37,8 @@ class Orchestrator:
             port_min=Config.SEEDBOX_PORT_MIN,
             port_max=Config.SEEDBOX_PORT_MAX
         )
-        self.executor = ThreadPoolExecutor(max_workers=1)
+        self.announcer = LiberationAnnouncer(self.seedbox)
+        self.executor = ThreadPoolExecutor(max_workers=2)
         self._setup_signal_handlers()
 
     def _setup_signal_handlers(self) -> None:
@@ -70,19 +71,44 @@ class Orchestrator:
             logger.info("Orchestrator Running - BUT UPDATES APPLIED")
             await asyncio.sleep(Config.HEARTBEAT_INTERVAL)
 
-    async def run_seedbox(self) -> None:
-        """Run seedbox in executor thread."""
+    async def initialize_seedbox(self) -> bool:
+        """Initialize seedbox in executor thread."""
         loop = asyncio.get_event_loop()
         try:
             await loop.run_in_executor(
                 self.executor,
-                self.seedbox.seed_content,
+                self.seedbox.initialize
+            )
+            logger.info("Seedbox initialized successfully")
+            return True
+        except SeedboxError as e:
+            logger.error(f"Seedbox initialization failed: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected seedbox init error: {e}", exc_info=True)
+            return False
+
+    async def run_seedbox_loop(self) -> None:
+        """Run seedbox status loop in executor thread."""
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(
+                self.executor,
+                self.seedbox.run_status_loop,
                 Config.SEEDBOX_STATUS_INTERVAL
             )
-        except SeedboxError as e:
-            logger.error(f"Seedbox failed: {e}")
         except Exception as e:
-            logger.error(f"Unexpected seedbox error: {e}", exc_info=True)
+            logger.error(f"Seedbox loop error: {e}", exc_info=True)
+
+    async def run_announcer(self) -> None:
+        """Run the IPV8 liberation announcer."""
+        try:
+            await self.announcer.start()
+            await self.announcer.announce_loop(interval=30)
+        except Exception as e:
+            logger.error(f"Announcer error: {e}", exc_info=True)
+        finally:
+            await self.announcer.stop()
 
     async def run(self) -> None:
         """Main orchestrator loop."""
@@ -93,10 +119,16 @@ class Orchestrator:
         logger.info(f"Update check interval: {Config.UPDATE_CHECK_INTERVAL}s")
         logger.info(f"Content directory: {Config.CONTENT_DIR}")
 
+        # Initialize seedbox first (blocking) so content is available for announcer
+        if not await self.initialize_seedbox():
+            logger.error("Cannot start without seedbox, exiting")
+            return
+
         tasks = [
             asyncio.create_task(self.check_for_updates()),
             asyncio.create_task(self.heartbeat()),
-            asyncio.create_task(self.run_seedbox()),
+            asyncio.create_task(self.run_seedbox_loop()),
+            asyncio.create_task(self.run_announcer()),
         ]
 
         try:
