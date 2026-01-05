@@ -1,2 +1,2 @@
 libtorrent
-pyipv8
+pyipv8==3.1.0
